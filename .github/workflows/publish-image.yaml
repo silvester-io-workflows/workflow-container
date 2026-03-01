@@ -23,6 +23,13 @@ on:
         description: Target platforms (comma-separated).
         required: false
         type: string
+    secrets:
+      REGISTRY_TOKEN:
+        description: Optional registry token used instead of GITHUB_TOKEN.
+        required: false
+      REGISTRY_USERNAME:
+        description: Optional registry username used instead of github.actor.
+        required: false
 
 permissions:
   contents: read
@@ -51,8 +58,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Docker metadata (tags, labels)
         id: metadata
