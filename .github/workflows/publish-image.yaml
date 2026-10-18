@@ -23,6 +23,16 @@ on:
         description: Target platforms (comma-separated).
         required: false
         type: string
+      artifact_name:
+        description: Optional build artifact produced by an earlier caller job.
+        required: false
+        type: string
+        default: ''
+      artifact_path:
+        description: Directory to restore the artifact into before building.
+        required: false
+        type: string
+        default: '.'
     secrets:
       REGISTRY_TOKEN:
         description: Optional registry token used instead of GITHUB_TOKEN.
@@ -36,7 +46,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: publish-${{ github.event.repository.name }}-image-${{ github.ref }}
+  group: publish-${{ github.repository }}-${{ inputs.image_name || github.repository }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -50,6 +60,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download build artifact
+        if: inputs.artifact_name != ''
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
