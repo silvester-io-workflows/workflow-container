@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   publish:
-    uses: silvester-io-homelab/pipeline-container/.github/workflows/publish-image.yaml@main
+    uses: silvester-io-workflows/workflow-container/.github/workflows/publish-image.yaml@v1
     with:
       context: ./container
       dockerfile: ./container/containerfile
@@ -34,3 +34,27 @@ jobs:
 - `context` (optional): Build context. Defaults to `./container`.
 - `dockerfile` (optional): Containerfile/Dockerfile path. Defaults to `./container/containerfile`.
 - `platforms` (optional): Target platforms. Defaults to `linux/amd64`.
+
+## Image tags
+
+The calling repository chooses the triggers. The example above includes
+`push.tags: ["v*"]`, so pushing a stable semantic-version tag such as `v1.2.3`
+publishes all of these image tags for the same image:
+
+- `:v1.2.3` — exact release version.
+- `:v1.2` — rolling minor-version channel.
+- `:v1` — rolling major-version channel.
+- `:sha-<commit>` — commit-specific tag, also published on regular pushes.
+
+Default-branch pushes continue to publish `:latest` and `:sha-<commit>`.
+Releases **do not** update `:latest`. Non-semver Git tags retain their
+previous exact-tag behavior. Pre-releases such as `v1.3.0-rc.1` publish only
+their pre-release version and SHA tag, without moving stable version channels.
+
+Major/minor tags deliberately move to the **most recently published**
+release in that channel. Publish releases in version order: publishing an
+older maintenance release later would otherwise move `:v1` backward.
+Consumers requiring immutable references should pin an image digest.
+
+The `@v1` in the `uses:` example selects this reusable workflow's branch;
+it is separate from a container image tag such as `:v1`.

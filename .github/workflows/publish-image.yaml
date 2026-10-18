@@ -66,8 +66,14 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Do not implicitly move :latest when a version tag is pushed.
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
             type=ref,event=tag
             type=sha,format=long
           labels: |
