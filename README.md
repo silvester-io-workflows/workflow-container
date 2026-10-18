@@ -34,6 +34,11 @@ jobs:
 - `context` (optional): Build context. Defaults to `./container`.
 - `dockerfile` (optional): Containerfile/Dockerfile path. Defaults to `./container/containerfile`.
 - `platforms` (optional): Target platforms. Defaults to `linux/amd64`.
+- `artifact_name` (optional): download an artifact produced earlier in this workflow run before building (e.g. `cli`).
+- `artifact_path` (optional): where to unpack it relative to the checkout (e.g. `.artifacts/cli/`); defaults to `.`.
+
+A caller that compiles binaries separately can publish them using `actions/upload-artifact` in its validation job and provide the matching `artifact_name` and `artifact_path` to this reusable workflow. The publish job must depend on the validation job.
+
 
 ## Image tags
 
