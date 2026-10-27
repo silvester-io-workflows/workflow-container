@@ -22,13 +22,40 @@ jobs:
   publish:
     uses: silvester-io-workflows/workflow-container/.github/workflows/publish-image.yaml@v1
     with:
+      runner: github # github (default), desktop, or homelab
       context: ./container
       dockerfile: ./container/containerfile
       platforms: linux/amd64
     secrets: inherit
 ```
 
+### Runner selection and caching
+
+`runner` accepts exactly three supported choices: `github`, `desktop`, or `homelab`. Omitting it preserves the original `ubuntu-latest` GitHub-hosted behavior. Runner selection is explicit, **not an automatic fallback**. The `desktop` runner needs to be online, and the `homelab` ARC scale set must have capacity.
+
+| Choice | Target | Buildx driver / caching |
+| --- | --- | --- |
+| `github` (default) | `ubuntu-latest` | `docker/setup-buildx-action`, image-scoped GitHub Actions cache (`type=gha`, import and export) |
+| `desktop` | `desktop` | Existing local Docker `default` builder; Docker image/cache layers persist on the host |
+| `homelab` | `homelab` | Existing Docker `default` builder; image/cache layers persist on the shared Longhorn PVC across ephemeral ARC runner pods |
+
+The `desktop` and `homelab` runners must provide a Docker daemon with Buildx enabled. The local default Docker driver is intended for the default `linux/amd64` image; multi-platform publishing may require a separately configured multi-platform-capable builder. These self-hosted modes deliberately do not upload Docker layers into GitHub's cache. Other workflow artifacts still use GitHub Actions `upload-artifact`/`download-artifact` regardless of runner type. Cache packages restored by `dotnet restore` run directly on the homelab runner are persisted separately at `/home/runner/.nuget/packages` using `NUGET_PACKAGES`; this does not automatically cache packages restored inside a Docker build. The shared runner PVC is disposable on cluster reprovisioning and must be used only by trusted jobs.
+
+Example for the homelab ARC scale set:
+
+```yaml
+jobs:
+  publish:
+    uses: silvester-io-workflows/workflow-container/.github/workflows/publish-image.yaml@v1
+    with:
+      runner: homelab
+      context: ./container
+      dockerfile: ./container/containerfile
+    secrets: inherit
+```
+
 ### Inputs
+- `runner` (optional): `github` (default), `desktop` or `homelab`.
 - `registry` (optional): Registry hostname. Defaults to `ghcr.io`.
 - `image_name` (optional): Image name to publish. Defaults to the caller repo (`owner/repo`).
 - `context` (optional): Build context. Defaults to `./container`.
